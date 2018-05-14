@@ -25,10 +25,13 @@ class BackgroundTask: NSObject {
     
     NotificationCenter.default.addObserver(self, selector: #selector(enterTerminateapp), name: NSNotification.Name.UIApplicationWillTerminate, object: nil)
     
+    
+    
     print("initial background task")
     updateTimer = Timer.scheduledTimer(timeInterval: 0.5, target: self, selector: #selector(backTask), userInfo: nil, repeats: true)
     
     listenVolumenButton()
+    listenBattery()
     registerBackground()
   }
   
@@ -74,6 +77,41 @@ class BackgroundTask: NSObject {
     backgroundTask = UIBackgroundTaskInvalid
   }
   
+  func batteryLevelChange(){
+    let levelBattery = UIDevice.current.batteryLevel
+    print("mi nivel de bateria es \(levelBattery)")
+  }
+  
+  func batteryStatusChange(){
+    let batteryStatus = UIDevice.current.batteryState
+    var stringstatus = ""
+    switch batteryStatus {
+    case .unknown:
+      stringstatus = "estatus desconocido"
+      print("estatus desconocido")
+    case .unplugged:
+      stringstatus = "estatus desconectado"
+      print("desconectado")
+    case .charging:
+      stringstatus = "estatus cargando"
+      print("cargando")
+    case .full:
+      stringstatus = "estatus lleno"
+      print("lleno")
+    }
+    if #available(iOS 10.0, *) {
+      createNotification(title: "Battery status", info: stringstatus)
+    } else {
+      // Fallback on earlier versions
+    }
+  }
+  
+  func listenBattery(){
+    UIDevice.current.isBatteryMonitoringEnabled = true
+    NotificationCenter.default.addObserver(self, selector: #selector(batteryLevelChange), name: NSNotification.Name.UIDeviceBatteryLevelDidChange, object: nil)
+    NotificationCenter.default.addObserver(self, selector: #selector(batteryStatusChange), name: Notification.Name.UIDeviceBatteryStateDidChange, object: nil)
+  }
+  
   func listenVolumenButton(){
     let audioSession = AVAudioSession.sharedInstance()
     do{
@@ -82,13 +120,13 @@ class BackgroundTask: NSObject {
       print("error into")
     }
     audioSession.addObserver(self, forKeyPath: "outputVolume", options: NSKeyValueObservingOptions.new, context: nil)
-  
+    
   }
   
   override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
     if keyPath == "outputVolume"{
       if let volulevel = (change?[NSKeyValueChangeKey.newKey] as? NSNumber)?.floatValue {
-         print("press button \(volulevel)")
+        print("press button \(volulevel)")
         if volulevel == 0{
           if #available(iOS 10.0, *) {
             createNotification(title: "Volumen", info: "El volumen es cero!!")
