@@ -19,7 +19,7 @@ class BackgroundTask: NSObject {
   func startBackground(){
     NotificationCenter.default.addObserver(self, selector: #selector(enterBackground), name: NSNotification.Name.UIApplicationDidEnterBackground, object: nil)
     
-    NotificationCenter.default.addObserver(self, selector: #selector(enterForeground), name: NSNotification.Name.UIApplicationWillEnterForeground, object: nil)
+    NotificationCenter.default.addObserver(self, selector: #selector(enterTerminateapp), name: NSNotification.Name.UIApplicationWillEnterForeground, object: nil)
     
     NotificationCenter.default.addObserver(self, selector: #selector(enterActiveapp), name: NSNotification.Name.UIApplicationDidBecomeActive, object: nil)
     
@@ -79,6 +79,13 @@ class BackgroundTask: NSObject {
   
   func batteryLevelChange(){
     let levelBattery = UIDevice.current.batteryLevel
+    if levelBattery < 0.1{
+      if #available(iOS 10.0, *) {
+        createNotification(title: "Battery level", info: "Nivel bateria bajo!!!")
+      } else {
+        // Fallback on earlier versions
+      }
+    }
     print("mi nivel de bateria es \(levelBattery)")
   }
   
